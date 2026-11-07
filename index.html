@@ -1,0 +1,607 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#070b13">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230b1220'/%3E%3Cg stroke='%239fd4ff' stroke-width='4' stroke-linecap='round'%3E%3Cpath d='M32 12v40M14.7 22l34.6 20M49.3 22L14.7 42'/%3E%3C/g%3E%3C/svg%3E">
+<title>立冬 · 岁寒有暖</title>
+<style>
+  :root{
+    --ice:#9fd4ff;
+    --ice-soft:rgba(159,212,255,.35);
+    --ember:#ffb26b;
+    --ink:#eaf6ff;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%;margin:0}
+  body{
+    background:radial-gradient(120% 80% at 50% 0%,#122031 0%,#0b1220 45%,#05080f 100%);
+    color:var(--ink);
+    font-family:"Songti SC","Source Han Serif SC","Noto Serif SC","STSong",Georgia,serif;
+    overflow:hidden;
+    overscroll-behavior:none;
+  }
+  #fx{position:fixed;inset:0;width:100%;height:100%;display:block;z-index:1}
+  .vignette{
+    position:fixed;inset:0;z-index:2;pointer-events:none;
+    background:radial-gradient(70% 55% at 50% 42%,transparent 40%,rgba(3,6,12,.55) 100%);
+  }
+  #stage{
+    position:relative;z-index:3;
+    min-height:100vh;min-height:100dvh;
+    display:grid;place-items:center;grid-template-areas:"stack";
+    padding:max(24px,env(safe-area-inset-top)) 22px max(72px,env(safe-area-inset-bottom));
+    text-align:center;
+  }
+
+  /* 封面与贺卡占用同一网格单元，交叉淡入淡出 */
+  #cover,#card{grid-area:stack}
+
+  /* ---------- 封面 ---------- */
+  #cover{
+    display:flex;flex-direction:column;align-items:center;gap:0;
+    transition:opacity .7s ease,transform .9s cubic-bezier(.22,1,.36,1),filter .7s ease,visibility .7s;
+  }
+  #cover.gone{
+    opacity:0;transform:scale(.86);filter:blur(6px);
+    pointer-events:none;visibility:hidden;
+  }
+  .ringwrap{position:relative;display:grid;place-items:center;width:min(78vw,340px);aspect-ratio:1;flex:none}
+  .frost-ring{
+    position:absolute;inset:0;border-radius:50%;
+    border:1px solid var(--ice-soft);
+    box-shadow:inset 0 0 70px rgba(159,212,255,.16),0 0 48px rgba(159,212,255,.10);
+  }
+  .frost-ring::before{
+    content:"";position:absolute;inset:-1px;border-radius:50%;
+    background:conic-gradient(from 0deg,transparent 0deg,rgba(159,212,255,.65) 40deg,transparent 120deg,rgba(255,178,107,.45) 210deg,transparent 300deg);
+    -webkit-mask:radial-gradient(farthest-side,transparent calc(100% - 2px),#000 calc(100% - 1px));
+    mask:radial-gradient(farthest-side,transparent calc(100% - 2px),#000 calc(100% - 1px));
+    animation:spin 22s linear infinite;
+  }
+  .frost-ring::after{
+    content:"";position:absolute;inset:14px;border-radius:50%;
+    background:conic-gradient(from 0deg,rgba(159,212,255,.30) 0 1deg,transparent 1deg 15deg);
+    -webkit-mask:radial-gradient(farthest-side,transparent calc(100% - 1.5px),#000 calc(100% - 1px));
+    mask:radial-gradient(farthest-side,transparent calc(100% - 1.5px),#000 calc(100% - 1px));
+    animation:spin 60s linear infinite reverse;
+    opacity:.75;
+  }
+  @keyframes spin{to{transform:rotate(360deg)}}
+
+  .brand{
+    position:relative;margin:0;
+    font-size:clamp(62px,20vw,132px);
+    letter-spacing:.16em;text-indent:.16em;line-height:1.06;
+    background:linear-gradient(178deg,#f4fbff 8%,var(--ice) 52%,#6d9bc8 100%);
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+    filter:drop-shadow(0 0 26px rgba(159,212,255,.35));
+  }
+  .sub{
+    margin:34px 0 0;font-size:13px;letter-spacing:.42em;text-indent:.42em;
+    color:rgba(234,246,255,.52);font-family:ui-sans-serif,system-ui,"Microsoft YaHei",sans-serif;
+  }
+  .hou{
+    margin:14px 0 0;font-size:clamp(12px,3.4vw,14px);letter-spacing:.2em;
+    color:rgba(159,212,255,.42);
+  }
+  .open{
+    margin-top:44px;padding:15px 46px;border-radius:999px;cursor:pointer;
+    background:linear-gradient(180deg,rgba(159,212,255,.16),rgba(159,212,255,.05));
+    border:1px solid rgba(159,212,255,.45);
+    color:var(--ink);font-size:16px;letter-spacing:.5em;text-indent:.5em;
+    font-family:inherit;
+    backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
+    box-shadow:0 0 0 rgba(159,212,255,0),inset 0 1px 0 rgba(255,255,255,.12);
+    transition:transform .35s cubic-bezier(.22,1,.36,1),box-shadow .35s ease,background .35s ease;
+  }
+  .open:hover,.open:focus-visible{
+    transform:translateY(-2px);
+    background:linear-gradient(180deg,rgba(159,212,255,.24),rgba(159,212,255,.08));
+    box-shadow:0 10px 40px rgba(159,212,255,.22),inset 0 1px 0 rgba(255,255,255,.18);
+    outline:none;
+  }
+  .open:active{transform:translateY(0) scale(.985)}
+  .hint{
+    margin:20px 0 0;font-size:11.5px;letter-spacing:.16em;
+    color:rgba(234,246,255,.30);font-family:ui-sans-serif,system-ui,"Microsoft YaHei",sans-serif;
+  }
+
+  /* ---------- 贺卡正文 ---------- */
+  #card{
+    display:flex;flex-direction:column;
+    align-items:center;justify-content:center;gap:0;padding:0 6px;
+    pointer-events:none;
+  }
+  #card.live{pointer-events:auto}
+  .line{
+    opacity:0;transform:translateY(16px);filter:blur(4px);
+    transition:opacity .9s ease,transform .9s cubic-bezier(.22,1,.36,1),filter .9s ease;
+  }
+  .line.in{opacity:1;transform:none;filter:none}
+  .eyebrow{
+    margin:0 0 30px;font-size:12px;letter-spacing:.5em;text-indent:.5em;
+    color:rgba(255,178,107,.88);font-family:ui-sans-serif,system-ui,"Microsoft YaHei",sans-serif;
+  }
+  .msg{
+    margin:0;max-width:22em;
+    font-size:clamp(20px,5.6vw,30px);line-height:2.05;
+    letter-spacing:.06em;
+    background:linear-gradient(180deg,#ffffff,#cfe8ff 60%,#9fd4ff);
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+    filter:drop-shadow(0 0 20px rgba(159,212,255,.22));
+  }
+  .sign{
+    margin:30px 0 0;font-size:12.5px;letter-spacing:.34em;text-indent:.34em;
+    color:rgba(234,246,255,.46);font-family:ui-sans-serif,system-ui,"Microsoft YaHei",sans-serif;
+  }
+  .tools{
+    display:flex;gap:12px;margin-top:44px;flex-wrap:wrap;justify-content:center;
+  }
+  .ghost{
+    padding:11px 22px;border-radius:999px;cursor:pointer;
+    background:rgba(255,255,255,.04);
+    border:1px solid rgba(159,212,255,.28);
+    color:rgba(234,246,255,.80);
+    font-size:13px;letter-spacing:.18em;text-indent:.18em;
+    font-family:ui-sans-serif,system-ui,"Microsoft YaHei",sans-serif;
+    transition:background .3s ease,border-color .3s ease,transform .25s ease;
+  }
+  .ghost:hover{background:rgba(159,212,255,.12);border-color:rgba(159,212,255,.5);transform:translateY(-1px)}
+  .ghost:active{transform:translateY(0)}
+
+  /* ---------- 固定控件 ---------- */
+  .sound{
+    position:fixed;right:16px;bottom:max(16px,env(safe-area-inset-bottom));
+    z-index:5;width:40px;height:40px;border-radius:50%;
+    display:grid;place-items:center;cursor:pointer;
+    background:rgba(8,14,24,.55);border:1px solid rgba(159,212,255,.25);
+    color:rgba(234,246,255,.75);font-size:15px;
+    backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+  }
+  .sound:hover{border-color:rgba(159,212,255,.55)}
+  footer{
+    position:fixed;left:0;right:0;bottom:max(22px,env(safe-area-inset-bottom));z-index:4;
+    text-align:center;font-size:10.5px;letter-spacing:.12em;
+    color:rgba(234,246,255,.20);
+    font-family:ui-sans-serif,system-ui,"Microsoft YaHei",sans-serif;
+    pointer-events:none;
+  }
+
+  @media (prefers-reduced-motion:reduce){
+    .frost-ring::before,.frost-ring::after{animation:none}
+    .line{transition-duration:.01s}
+  }
+</style>
+</head>
+<body>
+<canvas id="fx"></canvas>
+<div class="vignette"></div>
+
+<main id="stage">
+  <section id="cover">
+    <div class="ringwrap">
+      <div class="frost-ring"></div>
+      <h1 class="brand">立冬</h1>
+    </div>
+    <p class="sub">十一月七日 · 冬之始</p>
+    <p class="hou">水始冰 · 地始冻 · 雉入大水为蜃</p>
+    <button id="openBtn" class="open">开启</button>
+    <p class="hint">轻触开启 · 声音已调至很轻</p>
+  </section>
+
+  <section id="card" hidden aria-live="polite">
+    <p class="eyebrow line" data-i="0">立冬 · 致你</p>
+    <p class="msg line" data-i="1"></p>
+    <p class="sign line" data-i="2"></p>
+    <div class="tools line" data-i="3">
+      <button class="ghost" id="copyBtn">复制祝福</button>
+      <button class="ghost" id="againBtn">再来一次</button>
+    </div>
+  </section>
+</main>
+
+<button id="soundBtn" class="sound" aria-label="静音">🔊</button>
+<footer>自己做的一张贺卡 · 无广告 · 无跳转 · 不收集任何信息</footer>
+
+<script>
+(function () {
+  "use strict";
+
+  /* ============================================================
+     一、粒子层：雪 + 暖光
+     ============================================================ */
+  var cvs = document.getElementById('fx');
+  var ctx = cvs.getContext('2d');
+  var W = 0, H = 0, DPR = 1;
+  var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var snow = [], embers = [], waves = [];
+  var t0 = performance.now();
+
+  function sprite(color, size) {
+    var c = document.createElement('canvas');
+    c.width = c.height = size;
+    var g = c.getContext('2d');
+    var r = size / 2;
+    var grad = g.createRadialGradient(r, r, 0, r, r, r);
+    grad.addColorStop(0, color);
+    grad.addColorStop(1, 'rgba(0,0,0,0)');
+    g.fillStyle = grad;
+    g.beginPath();
+    g.arc(r, r, r, 0, Math.PI * 2);
+    g.fill();
+    return c;
+  }
+  var DOT_SNOW = sprite('rgba(226,244,255,.95)', 32);
+  var DOT_EMBER = sprite('rgba(255,178,107,.85)', 24);
+
+  function resize() {
+    DPR = Math.min(window.devicePixelRatio || 1, 2);
+    W = window.innerWidth;
+    H = window.innerHeight;
+    cvs.width = Math.floor(W * DPR);
+    cvs.height = Math.floor(H * DPR);
+    cvs.style.width = W + 'px';
+    cvs.style.height = H + 'px';
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    seed();
+  }
+
+  function rand(a, b) { return a + Math.random() * (b - a); }
+
+  function seed() {
+    var n = reduce ? 34 : Math.round(Math.min(150, (W * H) / 9000));
+    snow = [];
+    for (var i = 0; i < n; i++) {
+      var depth = rand(.35, 1);
+      snow.push({
+        x: Math.random() * W,
+        y: Math.random() * H,
+        r: rand(1.1, 3.4) * depth,
+        vy: rand(12, 34) * depth,
+        sway: rand(8, 26) * depth,
+        ph: Math.random() * Math.PI * 2,
+        sp: rand(.35, 1.1),
+        a: rand(.25, .85) * depth
+      });
+    }
+    embers = [];
+    var m = reduce ? 8 : 26;
+    for (var j = 0; j < m; j++) {
+      embers.push({
+        x: Math.random() * W,
+        y: H + rand(0, H * .5),
+        r: rand(1.6, 4.6),
+        vy: rand(9, 26),
+        sway: rand(10, 34),
+        ph: Math.random() * Math.PI * 2,
+        sp: rand(.25, .7),
+        a: rand(.10, .38)
+      });
+    }
+  }
+
+  function burst(x, y) {
+    waves.push({ x: x, y: y, r: 0, life: 1, max: Math.min(W, H) * .42 });
+    for (var i = 0; i < 30; i++) {
+      var ang = Math.random() * Math.PI * 2;
+      var sp = rand(60, 260);
+      waves.push({
+        x: x, y: y,
+        vx: Math.cos(ang) * sp,
+        vy: Math.sin(ang) * sp,
+        r: rand(1, 2.6),
+        life: 1,
+        spark: true
+      });
+    }
+  }
+
+  var last = 0;
+  function frame(now) {
+    var dt = Math.min((now - (last || now)) / 1000, .05);
+    last = now;
+    var t = (now - t0) / 1000;
+    var wind = Math.sin(t * .23) * 16 + Math.sin(t * .07) * 10;
+
+    ctx.clearRect(0, 0, W, H);
+    ctx.globalCompositeOperation = 'lighter';
+
+    /* 雪：缓缓落下，左右轻摆 */
+    for (var i = 0; i < snow.length; i++) {
+      var p = snow[i];
+      p.y += p.vy * dt;
+      p.ph += p.sp * dt;
+      var x = p.x + Math.sin(p.ph) * p.sway + wind * dt * 6;
+      if (p.y - p.r > H) { p.y = -p.r * 2; p.x = Math.random() * W; }
+      ctx.globalAlpha = p.a;
+      ctx.drawImage(DOT_SNOW, x - p.r * 2.4, p.y - p.r * 2.4, p.r * 4.8, p.r * 4.8);
+    }
+
+    /* 暖光：从地面缓缓升起，和冷色对冲 */
+    for (var k = 0; k < embers.length; k++) {
+      var e = embers[k];
+      e.y -= e.vy * dt;
+      e.ph += e.sp * dt;
+      if (e.y + e.r < 0) { e.y = H + e.r * 2; e.x = Math.random() * W; }
+      ctx.globalAlpha = e.a * (.6 + .4 * Math.sin(e.ph * 1.7));
+      ctx.drawImage(DOT_EMBER, e.x + Math.sin(e.ph) * e.sway - e.r * 2, e.y - e.r * 2, e.r * 4, e.r * 4);
+    }
+
+    /* 开启时的冲击波与碎光 */
+    for (var w = waves.length - 1; w >= 0; w--) {
+      var v = waves[w];
+      if (v.spark) {
+        v.x += v.vx * dt;
+        v.y += v.vy * dt;
+        v.vx *= (1 - 2.2 * dt);
+        v.vy = v.vy * (1 - 2.2 * dt) + 30 * dt;
+        v.life -= dt * .9;
+        if (v.life <= 0) { waves.splice(w, 1); continue; }
+        ctx.globalAlpha = Math.max(0, v.life) * .85;
+        ctx.fillStyle = '#cfe8ff';
+        ctx.beginPath();
+        ctx.arc(v.x, v.y, v.r, 0, Math.PI * 2);
+        ctx.fill();
+      } else {
+        v.r += (v.max - v.r) * 3.2 * dt;
+        v.life -= dt * 1.5;
+        if (v.life <= 0) { waves.splice(w, 1); continue; }
+        ctx.globalAlpha = Math.max(0, v.life) * .34;
+        ctx.strokeStyle = '#9fd4ff';
+        ctx.lineWidth = 1.4;
+        ctx.beginPath();
+        ctx.arc(v.x, v.y, v.r, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+    }
+
+    ctx.globalAlpha = 1;
+    ctx.globalCompositeOperation = 'source-over';
+    requestAnimationFrame(frame);
+  }
+
+  window.addEventListener('resize', resize, { passive: true });
+  resize();
+  requestAnimationFrame(frame);
+
+  /* ============================================================
+     二、声音：全部用 WebAudio 实时合成，不加载任何音频文件
+     ============================================================ */
+  var AC = null, master = null, muted = false;
+
+  function initAudio() {
+    if (AC) { if (AC.state === 'suspended') AC.resume(); return; }
+    var Ctx = window.AudioContext || window.webkitAudioContext;
+    if (!Ctx) return;
+    AC = new Ctx();
+    master = AC.createGain();
+    master.gain.value = muted ? 0 : .32;
+
+    var comp = AC.createDynamicsCompressor();
+    comp.threshold.value = -18;
+    comp.ratio.value = 3;
+    comp.connect(AC.destination);
+    master.connect(comp);
+
+    /* 一点回声，让声音有空间感 */
+    var delay = AC.createDelay(1);
+    delay.delayTime.value = .29;
+    var fb = AC.createGain(); fb.gain.value = .30;
+    var lp = AC.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 2000;
+    master.connect(delay);
+    delay.connect(lp);
+    lp.connect(fb);
+    fb.connect(delay);
+    lp.connect(comp);
+  }
+
+  /* 钟铃音：正弦叠加，指数衰减 */
+  function bell(freq, at, dur, vol) {
+    if (!AC || muted) return;
+    var t = AC.currentTime + at;
+    dur = dur || 2.4;
+    vol = vol == null ? .22 : vol;
+
+    var o1 = AC.createOscillator();
+    o1.type = 'sine';
+    o1.frequency.value = freq;
+
+    var o2 = AC.createOscillator();
+    o2.type = 'sine';
+    o2.frequency.value = freq * 2.005;
+
+    var g = AC.createGain();
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.linearRampToValueAtTime(vol, t + .015);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+
+    var g2 = AC.createGain(); g2.gain.value = .16;
+
+    o1.connect(g);
+    o2.connect(g2);
+    g2.connect(g);
+    g.connect(master);
+
+    o1.start(t); o2.start(t);
+    o1.stop(t + dur + .05); o2.stop(t + dur + .05);
+  }
+
+  /* 暖垫音：长起长落，像一口气 */
+  function pad(freq, at, dur, vol) {
+    if (!AC || muted) return;
+    var t = AC.currentTime + at;
+    var o = AC.createOscillator();
+    o.type = 'triangle';
+    o.frequency.value = freq;
+    var f = AC.createBiquadFilter();
+    f.type = 'lowpass';
+    f.frequency.setValueAtTime(400, t);
+    f.frequency.linearRampToValueAtTime(1100, t + dur * .5);
+    var g = AC.createGain();
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.linearRampToValueAtTime(vol, t + dur * .35);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    o.connect(f); f.connect(g); g.connect(master);
+    o.start(t); o.stop(t + dur + .05);
+  }
+
+  /* D 宫五声：D E #F A B */
+  var SCALE = [293.66, 329.63, 369.99, 440.00, 493.88, 587.33, 739.99, 880.00];
+
+  function playOpening() {
+    initAudio();
+    if (!AC) return;
+    pad(146.83, 0, 5.2, .10);          /* D3 */
+    pad(220.00, .06, 5.0, .07);        /* A3 */
+    var seq = [0, 2, 4, 3, 5, 4, 6];
+    for (var i = 0; i < seq.length; i++) {
+      bell(SCALE[seq[i]], .18 + i * .38, 2.6 - i * .12, .20 - i * .012);
+    }
+  }
+
+  function playPing(i) {
+    if (!AC) return;
+    bell(SCALE[5 + (i % 2)], 0, 1.8, .13);
+  }
+
+  var soundBtn = document.getElementById('soundBtn');
+  soundBtn.textContent = '🔊';
+  soundBtn.addEventListener('click', function () {
+    muted = !muted;
+    soundBtn.textContent = muted ? '🔇' : '🔊';
+    soundBtn.setAttribute('aria-label', muted ? '取消静音' : '静音');
+    if (master) master.gain.setTargetAtTime(muted ? 0 : .32, AC.currentTime, .12);
+  });
+
+  /* ============================================================
+     三、文案池
+     ============================================================ */
+  var BODIES = [
+    '愿你三冬暖，\n愿你春不寒。',
+    '南圆北饺，\n家在灯下。',
+    '把风关在门外，\n把话留给熟人。',
+    '冬天不是结束，\n是万物在暗处生长。',
+    '日子滚烫，\n岁月安然。',
+    '添衣，早睡，\n慢慢来。'
+  ];
+  var SIGNS = ['冬安', '立冬 · 顺问冬安', '岁暮天寒，问君暖否', '一阳复始，来日方长'];
+
+  function pick(arr, n) {
+    var copy = arr.slice(), out = [];
+    while (out.length < n && copy.length) {
+      out.push(copy.splice(Math.floor(Math.random() * copy.length), 1)[0]);
+    }
+    return out;
+  }
+
+  /* ============================================================
+     四、开场与交互
+     ============================================================ */
+  var cover = document.getElementById('cover');
+  var card = document.getElementById('card');
+  var openBtn = document.getElementById('openBtn');
+  var msgEl = card.querySelector('.msg');
+  var signEl = card.querySelector('.sign');
+  var copyBtn = document.getElementById('copyBtn');
+  var againBtn = document.getElementById('againBtn');
+  var lines = [].slice.call(card.querySelectorAll('.line'));
+  var timers = [];
+  var currentText = '';
+
+  function clearTimers() {
+    timers.forEach(clearTimeout);
+    timers = [];
+  }
+
+  function buildContent() {
+    var body = pick(BODIES, 1)[0];
+    var sign = pick(SIGNS, 1)[0];
+    msgEl.textContent = body;
+    msgEl.style.whiteSpace = 'pre-line';
+    signEl.textContent = '—— ' + sign;
+    currentText = '立冬\n' + body + '\n—— ' + sign;
+  }
+
+  function reveal() {
+    buildContent();
+    lines.forEach(function (el, i) {
+      el.classList.remove('in');
+      timers.push(setTimeout(function () {
+        el.classList.add('in');
+        if (i < 3) playPing(i);
+      }, 240 + i * 260));
+    });
+    timers.push(setTimeout(function () { card.classList.add('live'); }, 240 + 4 * 260));
+  }
+
+  function open() {
+    hideCover();
+    playOpening();
+    var r = openBtn.getBoundingClientRect();
+    burst(r.left + r.width / 2, r.top + r.height / 2);
+
+    card.hidden = false;
+    clearTimers();
+    reveal();
+  }
+
+  function hideCover() {
+    cover.classList.add('gone');
+    /* 用 visibility 隐藏（带过渡延迟），不用 display，避免与卡片层互相撑开布局 */
+    cover.setAttribute('aria-hidden', 'true');
+  }
+
+  function showCover() {
+    card.classList.remove('live');
+    card.hidden = true;
+    lines.forEach(function (el) { el.classList.remove('in'); });
+    cover.removeAttribute('aria-hidden');
+    cover.classList.remove('gone');
+  }
+
+  openBtn.addEventListener('click', open);
+
+  againBtn.addEventListener('click', function () {
+    clearTimers();
+    showCover();
+    timers.push(setTimeout(function () { open(); }, 60));
+  });
+
+  copyBtn.addEventListener('click', function () {
+    var text = currentText;
+    function fallback() {
+      var ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      try { document.execCommand('copy'); } catch (e) {}
+      document.body.removeChild(ta);
+      done();
+    }
+    function done() {
+      var old = copyBtn.textContent;
+      copyBtn.textContent = '已复制 ✓';
+      setTimeout(function () { copyBtn.textContent = old; }, 1600);
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(done, fallback);
+    } else {
+      fallback();
+    }
+  });
+
+  /* 键盘可达性：空格 / 回车开启 */
+  document.addEventListener('keydown', function (e) {
+    if ((e.key === 'Enter' || e.key === ' ') && !cover.classList.contains('gone')) {
+      e.preventDefault();
+      open();
+    }
+  });
+})();
+</script>
+</body>
+</html>
