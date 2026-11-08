@@ -1,0 +1,47 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>致你</title>
+<style>
+  html,body{margin:0;height:100%;background:#000;overflow:hidden}
+  canvas{display:block;width:100vw;height:100vh}
+  #t{position:fixed;left:0;right:0;bottom:15%;margin:0;padding:0 26px;text-align:center;
+     color:#ff8fa3;font:15px/2.15 -apple-system,"Microsoft YaHei",sans-serif;
+     letter-spacing:.22em;white-space:pre-line;text-shadow:0 0 20px rgba(255,90,120,.6)}
+  #t::after{content:"▌";animation:b .9s steps(1) infinite}
+  @keyframes b{50%{opacity:0}}
+</style>
+<canvas id="c"></canvas>
+<p id="t"></p>
+<script>
+var TO = "", MSG = "代码只有 30 行\n我对你的思念，却不止于此";
+var c = document.getElementById("c"), g = c.getContext("2d"), W, H, D = devicePixelRatio || 1, P = [], n = 0, txt = "";
+function size() { W = c.width = innerWidth * D; H = c.height = innerHeight * D; }
+size(); addEventListener("resize", size);
+function heart(a) { return [16 * Math.pow(Math.sin(a), 3), -(13 * Math.cos(a) - 5 * Math.cos(2 * a) - 2 * Math.cos(3 * a) - Math.cos(4 * a))]; }
+/* 沿曲线密集撒点，径向只做极小的随机抖动（0.93~1.06），
+   这样线是连续的而不是散开的珠链；a 两端避开尖点，避免顶端堆出尖刺。 */
+for (var i = 0; i < 760; i++) {
+  var a = (i + .5) / 760 * 6.2832;
+  if (a < .30 || a > 5.98) continue;
+  var q = heart(a), w = .93 + Math.random() * .13, r = Math.random() * 6.2832;
+  P.push({ x: q[0] * w, y: q[1] * w, o: r, s: .5 + Math.random() * .5 });
+}
+function draw() {
+  var t = Date.now() / 1000, s = Math.min(W, H) / 44 * (Math.sin(t * 3.7) * .02 + 1);
+  g.fillStyle = "rgba(0,0,0,.18)"; g.fillRect(0, 0, W, H); g.globalCompositeOperation = "lighter";
+  for (var i = 0; i < P.length; i++) {
+    var p = P[i], tw = .55 + .45 * Math.sin(t * 2 + p.o);
+    var x = W / 2 + p.x * s, y = H * .42 + p.y * s, k = p.s * tw;
+    g.fillStyle = "hsla(345,100%,62%," + (.06 + k * .20) + ")";
+    g.beginPath(); g.arc(x, y, 4.5 * D * k, 0, 6.2832); g.fill();
+    g.fillStyle = "rgba(255,226,232," + (.30 + k * .55) + ")";
+    g.beginPath(); g.arc(x, y, 1.1 * D * k, 0, 6.2832); g.fill();
+  }
+  g.globalCompositeOperation = "source-over"; requestAnimationFrame(draw);
+}
+function type() {
+  if (n++ < txt.length) { document.getElementById("t").textContent = txt.slice(0, n); setTimeout(type, txt[n - 1] === "\n" ? 460 : 105); }
+}
+addEventListener("load", function () { txt = (TO ? TO + "：\n" : "") + MSG; setTimeout(type, 900); draw(); });
+</script>
